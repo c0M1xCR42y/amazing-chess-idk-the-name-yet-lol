@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            background-color: white;
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        p,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        #images {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="images">
+        <image id="blackBishop" src="black_bishop.png"></image>
+        <image id="blackKing" src="black_king.png"></image>
+        <image id="blackKnight" src="black_knight.png"></image>
+        <image id="blackPawn" src="black_pawn.png"></image>
+        <image id="blackQueen" src="black_queen.png"></image>
+        <image id="blackRook" src="black_rook.png"></image>
+        <image id="whiteBishop" src="white_bishop.png"></image>
+        <image id="whiteKing" src="white_king.png"></image>
+        <image id="whiteKnight" src="white_knight.png"></image>
+        <image id="whitePawn" src="white_pawn.png"></image>
+        <image id="whiteQueen" src="white_queen.png"></image>
+        <image id="whiteRook" src="white_rook.png"></image>
+    </div>
+    <canvas id="gameCanvas" width="650px" height="500px" onclick="mouseEvents(event)" onmousemove="mouseMove(event)"
+        onmouseout="mouseOut()" tabindex="0"></canvas>
+    <script>
+        var game = document.getElementById("gameCanvas");
+        var gC = game.getContext("2d");
+
+        var background = "rgb(135, 80, 10)";
+        var font = "Comic Sans MS"; // for memes
+
+        var page = 1; // which page you are on (page 0 is menu, page 1 is playing, page 2 is the page determinning what mode you play, etc)
+        var mode = 0; // classic, no knights, etc
+
+        var blackImgSrc = { bishop: document.getElementById("blackBishop"), king: document.getElementById("blackKing"), knight: document.getElementById("blackKnight"), pawn: document.getElementById("blackPawn"), queen: document.getElementById("blackQueen"), rook: document.getElementById("blackRook") };
+        var whiteImgSrc = { bishop: document.getElementById("whiteBishop"), king: document.getElementById("whiteKing"), knight: document.getElementById("whiteKnight"), pawn: document.getElementById("whitePawn"), queen: document.getElementById("whiteQueen"), rook: document.getElementById("whiteRook") };
+
+        var amount = 8;
+        var squareWidth = 500 / amount;
+        var board = [[], []]; // this is so we can easily put the chess peices in the right locations (putChessPeice(board[x][y], x is in amount of tiles))
+        var info = function (x, y, peice = null, color = null, eaten = false, clicked = false) { // idk this is how stackoverflow did 2-d arrays holding objects this makes my brain hurt
+            return {
+                "x": x,
+                "y": y,
+                "peice": peice,
+                "color": color,
+                "eaten": eaten,
+                "clicked": clicked
+            };
+        };
+        for (var i = 0; i < amount; i++) {
+            board[i] = [];
+            for (var j = 0; j < amount; j++) {
+                board[i][j] = info(squareWidth * i, squareWidth * j);
+            }
+        }
+
+        var hover = { isTrue: false, x: null, y: null };
+
+
+        function mouseMove(event) {
+            var x = event.clientX;
+            var y = event.clientY;
+
+            for (var i = 0; i < amount; i++) {
+                for (var j = 0; j < amount; j++) {
+                    if (x > squareWidth * i && x < squareWidth * (i + 1) && y > squareWidth * j && y < squareWidth * (j + 1)) {
+                        hover.isTrue = true;
+                        hover.x = i * squareWidth;
+                        hover.y = j * squareWidth;
+                    } else if (x > 500) {
+                        hover.isTrue = false;
+                    }
+                }
+            }
+        }
+
+        function mouseOut() {
+            hover.isTrue = false;
+        }
+
+        function mouseEvents(event) {
+            var x = event.clientX;
+            var y = event.clientY;
+
+            for (var i = 0; i < amount; i++) {
+                for (var j = 0; j < amount; j++) {
+                    if (x > squareWidth * i && x < squareWidth * (i + 1) && y > squareWidth * j && y < squareWidth * (j + 1)) {
+                        board[i][j].clicked = true;
+                    }
+                }
+            }
+        }
+
+        var playTimer;
+        function play() {
+            playTimer = setTimeout('play()', 0);
+            gC.fillStyle = background;
+            gC.fillRect(0, 0, 650, 500);
+
+            if (page == 0) { // menu
+                text("Extra Chess", 100, 325, 100, "white");
+                black("queen", 100, 150, 300);
+                white("bishop", 25, 125, 200);
+                white("knight", 250, 150, 300);
+                black("rook", 425, 125, 200);
+            } else if (page == 1) { // game
+                drawBoard();
+                if (hover.isTrue) {
+                    gC.globalAlpha = 0.7;
+                    gC.fillStyle = "rgb(100, 100, 80)";
+                    gC.fillRect(hover.x, hover.y, squareWidth, squareWidth);
+                    gC.globalAlpha = 1.0;
+                }
+                if (mode == 0) { // classic chess
+                    for (var i = 0; i < amount; i++) {
+                        board[i][0].color = "black";
+                        board[i][1].color = "black";
+                        board[i][amount - 2].color = "white";
+                        board[i][amount - 1].color = "white";
+                    }
+                    for (var i = 0; i < amount; i++) {
+                        board[i][1].peice = "pawn";
+                        board[i][amount - 2].peice = "pawn";
+                    }
+                    board[0][0].peice = "rook";
+                    board[1][0].peice = "knight";
+                    board[2][0].peice = "bishop";
+                    board[3][0].peice = "queen";
+                    board[4][0].peice = "king";
+                    board[5][0].peice = "bishop";
+                    board[6][0].peice = "knight";
+                    board[7][0].peice = "rook";
+                    board[0][amount - 1].peice = "rook";
+                    board[1][amount - 1].peice = "knight";
+                    board[2][amount - 1].peice = "bishop";
+                    board[3][amount - 1].peice = "queen";
+                    board[4][amount - 1].peice = "king";
+                    board[5][amount - 1].peice = "bishop";
+                    board[6][amount - 1].peice = "knight";
+                    board[7][amount - 1].peice = "rook";
+                }
+
+                for (var i = 0; i < amount; i++) {
+                    for (var j = 0; j < amount; j++) {
+                        if (!(board[i][j].peice == null)) {
+                            if (board[i][j].color == "black") {
+                                black(board[i][j].peice, board[i][j].x, board[i][j].y);
+                            } else if (board[i][j].color == "white") {
+                                white(board[i][j].peice, board[i][j].x, board[i][j].y);
+                            } else {
+                                console.log("you failed at spelling somewhere good luck trying to find it nerd");
+                            }
+                        }
+
+                        if (board[i][j].clicked) {
+                            if (board[i][j].peice == null) {
+                                board[i][j].clicked = false;
+                            } else {
+                                // show all possible places it can go
+                            }
+                        }
+                    }
+                }
+            }
+
+            function text(t, size, x, y, color = "black") {
+                this.t = t;
+                this.size = size;
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                gC.textAlign = "center";
+                gC.fillStyle = this.color;
+                gC.font = size + "px " + font;
+                gC.fillText(this.t, this.x, this.y);
+            }
+
+            function black(type, x, y, size = squareWidth) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                if (this.type == "bishop") {
+                    gC.drawImage(blackImgSrc.bishop, this.x, this.y, this.size, this.size);
+                } else if (this.type == "king") {
+                    gC.drawImage(blackImgSrc.king, this.x, this.y, this.size, this.size);
+                } else if (this.type == "knight") {
+                    gC.drawImage(blackImgSrc.knight, this.x, this.y, this.size, this.size);
+                } else if (this.type == "pawn") {
+                    gC.drawImage(blackImgSrc.pawn, this.x, this.y, this.size, this.size);
+                } else if (this.type == "queen") {
+                    gC.drawImage(blackImgSrc.queen, this.x, this.y, this.size, this.size);
+                } else if (this.type == "rook") {
+                    gC.drawImage(blackImgSrc.rook, this.x, this.y, this.size, this.size);
+                } else {
+                    console.log("you cant type");
+                }
+            }
+
+            function white(type, x, y, size = squareWidth) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                if (this.type == "bishop") {
+                    gC.drawImage(whiteImgSrc.bishop, this.x, this.y, this.size, this.size);
+                } else if (this.type == "king") {
+                    gC.drawImage(whiteImgSrc.king, this.x, this.y, this.size, this.size);
+                } else if (this.type == "knight") {
+                    gC.drawImage(whiteImgSrc.knight, this.x, this.y, this.size, this.size);
+                } else if (this.type == "pawn") {
+                    gC.drawImage(whiteImgSrc.pawn, this.x, this.y, this.size, this.size);
+                } else if (this.type == "queen") {
+                    gC.drawImage(whiteImgSrc.queen, this.x, this.y, this.size, this.size);
+                } else if (this.type == "rook") {
+                    gC.drawImage(whiteImgSrc.rook, this.x, this.y, this.size, this.size);
+                } else {
+                    console.log("you cant spell");
+                }
+            }
+
+            function drawBoard() {
+                for (var i = 0; i < 500; i += squareWidth * 2) {
+                    for (var j = 0; j < 500; j += squareWidth * 2) {
+                        gC.fillStyle = "white";
+                        gC.fillRect(i, j, squareWidth, squareWidth);
+                    }
+                }
+                for (var i = squareWidth; i < 500; i += squareWidth * 2) {
+                    for (var j = squareWidth; j < 500; j += squareWidth * 2) {
+                        gC.fillStyle = "white";
+                        gC.fillRect(i, j, squareWidth, squareWidth);
+                    }
+                }
+                for (var i = squareWidth; i < 500; i += squareWidth * 2) {
+                    for (var j = 0; j < 500; j += squareWidth * 2) {
+                        gC.fillStyle = "black";
+                        gC.fillRect(i, j, squareWidth, squareWidth);
+                    }
+                }
+                for (var i = 0; i < 500; i += squareWidth * 2) {
+                    for (var j = squareWidth; j < 500; j += squareWidth * 2) {
+                        gC.fillStyle = "black";
+                        gC.fillRect(i, j, squareWidth, squareWidth);
+                    }
+                }
+            }
+        }
+        play();
+    </script>
+</body>
+
+</html>
